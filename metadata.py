@@ -2,7 +2,7 @@ import os
 import warnings
 import utils
 from utils import get_nested_value, obj2set, f8extract, struct
-import progressbar
+# import progressbar
 
 m = '/mindhive/evlab/u/Shared/SUBJECTS'
 
@@ -11,7 +11,7 @@ class Metadata:
     # a metadata structure, collecting information from the entire
     # input dataframe
     type = None  # could be None, audit, or convert
-    data = None
+    data = []
     models = []  # (string: parent_dir, Model: model)
     output = None
 
@@ -37,7 +37,7 @@ class Metadata:
     def collect_model_info(self):
         if not self.models:
             self.create_model_objects()
-        for model in progressbar.progressbar(self.models):
+        for model in self.models:
             model.parse_spm()
             model.parse_model()
 
@@ -49,8 +49,10 @@ class Metadata:
                 model.parse_hdf_preproc()
 
     def write_model_csv(self, filename):
+        for model in self.models:
+            self.data.append(model.params)
         import pandas as pd
-        df = pd.DataFrame(utils.combine_dict(self.models)).to_csv(filename)
+        df = pd.DataFrame(utils.combine_dict(self.data)).to_csv(filename)
 
 
 class Model:
