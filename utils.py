@@ -12,8 +12,25 @@ struct = {
 }
 
 
+class OrderedSet:
+    elements = []
+
+    def __init__(self, elements: list):
+        self.elements = []
+        for element in elements:
+            self.add(element)
+
+    def add(self, entry):
+        if entry not in self.elements:
+            self.elements.append(entry)
+
+
 def get_nested_value(ref, fields):
-    return reduce(getitem, fields, ref)
+    try:
+        return reduce(getitem, fields, ref)
+    except IndexError:
+        array = reduce(getitem, fields[:-1], ref)
+        return nested2list(array, fields[-1])
 
 
 def path2file(s):
@@ -28,9 +45,11 @@ def byte2str(bytes_obj, path=True):
 
 
 def obj2set(ref, obj):
+    if type(obj) == list:
+        return OrderedSet([path2file(f) for f in obj]).elements
     if len(obj) == 1:
         obj = obj[0]
-    return set([byte2str(ref[i]) for i in obj])
+    return OrderedSet([byte2str(ref[i]) for i in obj]).elements
 
 
 def nested2list(obj, key):
@@ -44,6 +63,8 @@ def f8extract(f8):
         return list(map(float, f8))
     elif type(f8) == int:
         return f8
+    else:
+        return list(map(float, f8))
 
 
 def combine_dict(dicts):

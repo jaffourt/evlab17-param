@@ -28,7 +28,7 @@ class Metadata:
     def create_model_objects(self):
         if self.parent_dir and self.child_dir:
             for t in zip(self.data[self.parent_dir], self.data[self.child_dir]):
-                self.models.append((t[0], Model(t)))
+                self.models.append(Model(t))
         else:
             ValueError('Missing session & model column names')
 
@@ -36,8 +36,11 @@ class Metadata:
         if not self.models:
             self.create_model_objects()
         for model in self.models:
-            model[-1].parse_spm()
-            model[-1].parse_model()
+            model.parse_spm()
+            model.parse_model()
+            print(model.params)
+            import sys
+            sys.exit()
 
     def collect_preproc_info(self):
         if not self.models:
