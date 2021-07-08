@@ -38,9 +38,12 @@ def nested2list(obj, key):
 
 
 def f8extract(f8):
-    if len(f8) == 1:
-        f8 = f8[0]
-    return list(map(float, f8))
+    if type(f8) == list:
+        if len(f8) == 1:
+            f8 = f8[0]
+        return list(map(float, f8))
+    elif type(f8) == int:
+        return f8
 
 
 def combine_dict(dicts):
