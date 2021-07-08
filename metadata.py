@@ -2,6 +2,7 @@ import os
 import warnings
 import utils
 from utils import get_nested_value, obj2set, f8extract, struct
+import progressbar
 
 m = '/mindhive/evlab/u/Shared/SUBJECTS'
 
@@ -36,12 +37,9 @@ class Metadata:
     def collect_model_info(self):
         if not self.models:
             self.create_model_objects()
-        for model in self.models:
+        for model in progressbar.progressbar(self.models):
             model.parse_spm()
             model.parse_model()
-            print(model.params)
-            import sys
-            sys.exit()
 
     def collect_preproc_info(self):
         if not self.models:
