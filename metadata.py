@@ -68,11 +68,11 @@ class Model:
         self.params['Session'], sess = model_info[0], model_info[0]
         self.params['Experiment'], exp = model_info[-1], model_info[-1]
 
-        self.spm = os.path.join(os.getcwd(), 'SPM.mat')
-        self.model = os.path.join(os.getcwd(), 'modelspecification.mat')
-        # path = os.path.join(m, sess, 'firstlevel_%s' % exp)
-        # self.spm = os.path.join(path, 'SPM.mat')
-        # self.model = os.path.join(path, 'modelspecification.mat')
+        # self.spm = os.path.join(os.getcwd(), 'SPM.mat')
+        # self.model = os.path.join(os.getcwd(), 'modelspecification.mat')
+        path = os.path.join(m, sess, 'firstlevel_%s' % exp)
+        self.spm = os.path.join(path, 'SPM.mat')
+        self.model = os.path.join(path, 'modelspecification.mat')
         pass
 
     def open_fp(self, file):
