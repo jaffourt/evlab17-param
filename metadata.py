@@ -1,4 +1,5 @@
 import os
+import warnings
 import utils
 from utils import get_nested_value, obj2set, f8extract, struct
 
@@ -79,6 +80,7 @@ class Model:
         pass
 
     def open_fp(self, file):
+        self.hdr = None
         if os.path.exists(file):
             try:
                 import h5py
@@ -88,19 +90,24 @@ class Model:
             except NotImplementedError:
                 raise Warning('Skipping %s, mat file not readable' % file)
         else:
-            raise FileNotFoundError('%s file not found' % file)
+            warnings.warn('%s file not found' % file)
 
     def parse_spm(self):
         self.open_fp(self.spm)
-        self.params['IPS'] = f8extract(get_nested_value(self.hdr, struct['ips']))
-        self.params['n_voxels'] = f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['voxels']))
-        # self.params['FWHM'] =
-        # 'x=%.3f, y=%.3f, z%.3f' % tuple(f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['smooth'])))
-        self.params['Files'] = obj2set(self.hdr, get_nested_value(self.hdr, struct['s_base'] + struct['volume']))
+        if self.hdr is not None:
+            self.params['IPS'] = f8extract(get_nested_value(self.hdr, struct['ips']))
+            self.params['n_voxels'] = f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['voxels']))
+            self.params['Files'] = obj2set(self.hdr, get_nested_value(self.hdr, struct['s_base'] + struct['volume']))
+            # self.params['FWHM'] =
+            # 'x=%.3f, y=%.3f, z%.3f' % tuple(f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['smooth'])))
+        else:
+            self.params['IPS'], self.params['n_voxels'], self.params['Files'] = None, None, None
 
     def parse_model(self):
         self.open_fp(self.model)
-        self.params['hpf'] = utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'hpf')
-        self.params['nconds'] = [len(d_mat) for d_mat in
-                                 utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'cond')]
-
+        if self.hdr is not None:
+            self.params['hpf'] = utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'hpf')
+            self.params['nconds'] = [len(d_mat) for d_mat in
+                                     utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'cond')]
+        else:
+            self.params['hpf'], self.params['nconds'] = None, None
