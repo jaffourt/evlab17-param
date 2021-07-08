@@ -10,10 +10,9 @@ m = '/mindhive/evlab/u/Shared/SUBJECTS'
 class Metadata:
     # a metadata structure, collecting information from the entire
     # input dataframe
-    type = None  # could be None, audit, or convert
     data = []
     models = []  # (string: parent_dir, Model: model)
-    output = None
+    output = []
 
     def __init__(self, **kwargs):
         self.f = kwargs.get('csv', None)
@@ -50,14 +49,12 @@ class Metadata:
 
     def write_model_csv(self, filename):
         for model in self.models:
-            self.data.append(model.params)
+            self.output.append(model.params)
         import pandas as pd
         df = pd.DataFrame(utils.combine_dict(self.data)).to_csv(filename)
 
 
 class Model:
-    hdr = None
-    params = {}
 
     def __init__(self, model_info):
         """
@@ -68,13 +65,20 @@ class Model:
             x[i]: not yet implemented
 
         """
-
-        self.params['Session'], sess = model_info[0], model_info[0]
-        self.params['Experiment'], exp = model_info[-1], model_info[-1]
+        self.hdr = None
+        self.params = {
+            'Session': model_info[0],
+            'Experiment': model_info[-1],
+            'IPS': None,
+            'n_voxels': None,
+            'Files': None,
+            'hpf': None,
+            'nconds': None
+        }
 
         # self.spm = os.path.join(os.getcwd(), 'SPM.mat')
         # self.model = os.path.join(os.getcwd(), 'modelspecification.mat')
-        path = os.path.join(m, sess, 'firstlevel_%s' % exp)
+        path = os.path.join(m, self.params['Session'], 'firstlevel_%s' % self.params['Experiment'])
         self.spm = os.path.join(path, 'SPM.mat')
         self.model = os.path.join(path, 'modelspecification.mat')
         pass
@@ -98,10 +102,6 @@ class Model:
             self.params['IPS'] = f8extract(get_nested_value(self.hdr, struct['ips']))
             self.params['n_voxels'] = f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['voxels']))
             self.params['Files'] = obj2set(self.hdr, get_nested_value(self.hdr, struct['s_base'] + struct['volume']))
-            # self.params['FWHM'] =
-            # 'x=%.3f, y=%.3f, z%.3f' % tuple(f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['smooth'])))
-        else:
-            self.params['IPS'], self.params['n_voxels'], self.params['Files'] = None, None, None
 
     def parse_model(self):
         self.open_fp(self.model)
@@ -109,5 +109,3 @@ class Model:
             self.params['hpf'] = utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'hpf')
             self.params['nconds'] = [len(d_mat) for d_mat in
                                      utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'cond')]
-        else:
-            self.params['hpf'], self.params['nconds'] = None, None
