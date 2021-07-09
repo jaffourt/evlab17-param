@@ -2,7 +2,7 @@ import os
 import warnings
 import utils
 from utils import get_nested_value, obj2set, f8extract, struct
-# import progressbar
+import progressbar
 
 m = '/mindhive/evlab/u/Shared/SUBJECTS'
 
@@ -36,7 +36,7 @@ class Metadata:
     def collect_model_info(self):
         if not self.models:
             self.create_model_objects()
-        for model in self.models:
+        for model in progressbar.progressbar(self.models):
             model.parse_spm()
             model.parse_model()
 
@@ -51,7 +51,9 @@ class Metadata:
         for model in self.models:
             self.output.append(model.params)
         import pandas as pd
-        df = pd.DataFrame(utils.combine_dict(self.data)).to_csv(filename)
+        df = pd.DataFrame(self.output)
+        df = df.set_index(['Session', 'Experiment', 'n_voxels']).apply(pd.Series.explode).reset_index()
+        df.to_csv(filename)
 
 
 class Model:
@@ -69,8 +71,8 @@ class Model:
         self.params = {
             'Session': model_info[0],
             'Experiment': model_info[-1],
-            'IPS': None,
             'n_voxels': None,
+            'IPS': None,
             'Files': None,
             'hpf': None,
             'nconds': None
@@ -81,7 +83,6 @@ class Model:
         path = os.path.join(m, self.params['Session'], 'firstlevel_%s' % self.params['Experiment'])
         self.spm = os.path.join(path, 'SPM.mat')
         self.model = os.path.join(path, 'modelspecification.mat')
-        pass
 
     def open_fp(self, file):
         self.hdr = None
@@ -100,7 +101,7 @@ class Model:
         self.open_fp(self.spm)
         if self.hdr is not None:
             self.params['IPS'] = f8extract(get_nested_value(self.hdr, struct['ips']))
-            self.params['n_voxels'] = f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['voxels']))
+            self.params['n_voxels'] = f8extract(get_nested_value(self.hdr, struct['s_base'] + struct['voxels']))[0]
             self.params['Files'] = obj2set(self.hdr, get_nested_value(self.hdr, struct['s_base'] + struct['volume']))
 
     def parse_model(self):
@@ -109,3 +110,6 @@ class Model:
             self.params['hpf'] = utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'hpf')
             self.params['nconds'] = [len(d_mat) for d_mat in
                                      utils.nested2list(get_nested_value(self.hdr, struct['e_base']), 'cond')]
+        else:
+            self.params['hpf'] = [None]*len(self.params['Files'])
+            self.params['nconds'] = self.params['hpf']

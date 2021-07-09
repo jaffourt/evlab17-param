@@ -62,7 +62,7 @@ def f8extract(f8):
             f8 = f8[0]
         return list(map(float, f8))
     elif type(f8) == int:
-        return f8
+        return [f8]
     else:
         return list(map(float, f8))
 
