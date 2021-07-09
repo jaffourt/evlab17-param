@@ -1,5 +1,9 @@
 from functools import reduce
 from operator import itemgetter, getitem
+from time import sleep
+import contextlib
+import sys
+
 
 struct = {
     's_base': ['SPM'],
@@ -24,6 +28,15 @@ class OrderedSet:
         if entry not in self.elements:
             self.elements.append(entry)
 
+class DummyFile(object):
+    file = None
+    def __init__(self, file):
+        self.file = file
+
+    def write(self, x):
+        # Avoid print() second call (useless \n)
+        if len(x.rstrip()) > 0:
+            tqdm.write(x, file=self.file)
 
 def get_nested_value(ref, fields):
     try:
@@ -72,6 +85,14 @@ def combine_dict(dicts):
     for k in dicts[0].keys():  # assume shared keys
         d[k] = [d[k] for d in dicts]
     return d
+
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = DummyFile(sys.stdout)
+    yield
+    sys.stdout = save_stdout
 
 
 def load_mat(filename):

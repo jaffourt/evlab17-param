@@ -1,11 +1,13 @@
 import os
+import sys
+import logging
 import warnings
 import utils
 from utils import get_nested_value, obj2set, f8extract, struct
-import progressbar
+from tqdm import tqdm
 
 m = '/mindhive/evlab/u/Shared/SUBJECTS'
-
+LOG = logging.getLogger(__name__)
 
 class Metadata:
     # a metadata structure, collecting information from the entire
@@ -36,7 +38,7 @@ class Metadata:
     def collect_model_info(self):
         if not self.models:
             self.create_model_objects()
-        for model in progressbar.progressbar(self.models):
+        for model in tqdm(self.models):
             model.parse_spm()
             model.parse_model()
 
@@ -93,9 +95,11 @@ class Model:
             except OSError:
                 self.hdr = utils.load_mat(file)
             except NotImplementedError:
-                raise Warning('Skipping %s, mat file not readable' % file)
+                warnings.warn('Skipping %s, mat file not readable' % file)
         else:
-            warnings.warn('%s file not found' % file)
+            warnings.warn('%s file not found (warn)' % file)
+            #LOG.info("%s file not found (LOG)" % file)
+            #print("%s file not found (stdout)" % file)
 
     def parse_spm(self):
         self.open_fp(self.spm)
